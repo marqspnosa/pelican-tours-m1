@@ -10,7 +10,7 @@
 # ============================================================
 set -eux
 
-APP_ZIP_URL=APP_ZIP_URL="https://github.com/marqspnosa/pelican-tours-m1/archive/refs/heads/main.zip"
+APP_ZIP_URL="https://github.com/marqspnosa/pelican-tours-m1/archive/refs/heads/main.zip"
 
 dnf install -y nodejs unzip
 
