@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pelican Tours · Starter App Guide</title>
+<style>
+:root{--bg:#f6f4ef;--ink:#1d2433;--mut:#5c6474;--panel:#fff;--line:#e5e1d8;--pri:#1273a8;--pri2:#0b4460;--acc:#3f3d99}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+.topnav{position:sticky;top:0;z-index:50;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 18px;background:rgba(255,255,255,.94);backdrop-filter:blur(6px);border-bottom:3px solid var(--pri);font-size:14px;flex-wrap:wrap}
+.topnav a{color:var(--pri2);text-decoration:none;font-weight:600}
+main{max-width:900px;margin:0 auto;padding:20px 16px 80px}
+.hero{background:linear-gradient(135deg,#1273a8,#123047);color:#fff;border-radius:16px;padding:24px 28px;margin:14px 0 22px}
+.hero h1{margin:0 0 6px;font-size:26px}
+.hero p{opacity:.92;margin:0}
+h2{font-size:21px;margin:30px 0 10px;padding-left:12px;border-left:6px solid var(--pri)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;box-shadow:0 2px 10px rgba(29,36,51,.05)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;margin:10px 0}
+th{background:#f0eee6;text-align:left}
+th,td{border:1px solid var(--line);padding:8px 11px;vertical-align:top}
+.promptbox{background:#171c2e;color:#dfe6ff;border-radius:10px;padding:14px 16px;position:relative;margin:10px 0}
+.promptbox pre{margin:0;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.5}
+.copybtn{position:absolute;top:8px;right:8px;background:var(--pri);border:none;color:#fff;border-radius:8px;padding:4px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+.note{font-size:13.5px;color:var(--mut)}
+code.inline{background:#ecebe4;border-radius:5px;padding:1px 6px;font-size:13.5px}
+.btn{display:inline-block;background:var(--pri);color:#fff;border:none;border-radius:10px;padding:9px 18px;font:inherit;font-weight:700;cursor:pointer;font-size:14.5px;text-decoration:none}
+.btn.ghost{background:#fff;color:var(--pri2);border:1.5px solid var(--pri)}
+@media print{.topnav,.btn,.copybtn{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<nav class="topnav">
+  <a href="../index.html">← Project Brief</a>
+  <span style="font-weight:700">📦 Starter App Guide</span>
+  <a href="../setup.html">🎓 Learner Lab Setup</a>
+</nav>
+<main>
+
+<header class="hero">
+  <h1>📦 The booking app</h1>
+  <p>The app you'll deploy to AWS three different ways. Zero dependencies — Node's standard library only. Files: <code style="background:rgba(255,255,255,.15);border-radius:5px;padding:1px 6px">server.js · tours.json · user-data.sh · public/index.html</code></p>
+</header>
+
+<h2>Try it locally first (2 minutes, before any AWS)</h2>
+<div class="card">
+  <div class="promptbox"><button class="copybtn" onclick="copyPrompt(this)">📋 Copy</button><pre>node server.js
+# → http://localhost:3000</pre></div>
+</div>
+
+<h2>Deploy shapes by milestone</h2>
+<div class="card">
+  <table>
+    <tr><th>Milestone</th><th>Frontend</th><th>API</th><th>How</th></tr>
+    <tr><td><strong>M1</strong> rehost</td><td>EC2 (this app serves both)</td><td>same EC2</td><td><code class="inline">user-data.sh</code> at launch</td></tr>
+    <tr><td><strong>M2</strong> replatform</td><td>S3 static website (<code class="inline">public/</code> + <code class="inline">config.js</code>)</td><td>EC2 / ALB</td><td><code class="inline">window.API_BASE = "http://YOUR-ALB-DNS"</code></td></tr>
+    <tr><td><strong>M4</strong> refactor</td><td>S3 static website</td><td>API Gateway + Lambda + DynamoDB</td><td>each <code class="inline">handleApi</code> branch becomes a Lambda handler</td></tr>
+  </table>
+</div>
+
+<h2>Endpoints</h2>
+<div class="card">
+  <table>
+    <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+    <tr><td>GET</td><td><code class="inline">/api/health</code></td><td>status + which instance served you (rotates behind the ALB)</td></tr>
+    <tr><td>GET</td><td><code class="inline">/api/config</code></td><td>company branding</td></tr>
+    <tr><td>GET</td><td><code class="inline">/api/tours</code></td><td>tour catalog</td></tr>
+    <tr><td>GET</td><td><code class="inline">/api/tours/:id</code></td><td>one tour</td></tr>
+    <tr><td>POST</td><td><code class="inline">/api/bookings</code></td><td>book: <code class="inline">{"tourId":1,"name":"Ada","guests":2}</code></td></tr>
+    <tr><td>GET</td><td><code class="inline">/api/bookings</code></td><td>list bookings (in-memory — M4 asks why that's a problem)</td></tr>
+    <tr><td>GET</td><td><code class="inline">/api/stats</code></td><td>request metering — evidence for your cost/usage reports</td></tr>
+  </table>
+  <p class="note">API responses send permissive CORS headers so the S3-hosted frontend can call them (journal question: why is <code class="inline">*</code> fine here, risky in production?). Booking state is <strong>in-memory on purpose</strong> — it vanishes on every instance replacement, which is exactly the lesson that motivates DynamoDB in M4.</p>
+</div>
+
+<div style="display:flex;justify-content:space-between;margin-top:26px;flex-wrap:wrap;gap:10px">
+  <a class="btn ghost" href="../index.html">← Back to the project brief</a>
+  <a class="btn" href="../setup.html">🎓 Learner Lab setup</a>
+</div>
+
+</main>
+<script>
+function copyPrompt(btn){
+  const txt=btn.parentNode.querySelector('pre').textContent;
+  const done=()=>{btn.textContent='✓ Copied';setTimeout(()=>btn.textContent='📋 Copy',1500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done));}
+  else fallbackCopy(txt,done);
+}
+function fallbackCopy(txt,done){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){}document.body.removeChild(ta);}
+</script>
+</body>
+</html>

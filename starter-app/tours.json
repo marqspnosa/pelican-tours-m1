@@ -1,0 +1,8 @@
+[
+  { "id": 1, "name": "Manatee Meet & Float — Tampa Bay", "price": 89.00, "seats": 8, "duration": "3 hrs" },
+  { "id": 2, "name": "Sunrise Kayak — Hillsborough River", "price": 55.00, "seats": 10, "duration": "2 hrs" },
+  { "id": 3, "name": "Airboat Backwater Run", "price": 74.00, "seats": 12, "duration": "90 min" },
+  { "id": 4, "name": "Sunset Paddleboard & Picnic", "price": 65.00, "seats": 6, "duration": "2.5 hrs" },
+  { "id": 5, "name": "Snorkel the Springs", "price": 49.00, "seats": 14, "duration": "2 hrs" },
+  { "id": 6, "name": "Private Charter — Full Day", "price": 620.00, "seats": 6, "duration": "8 hrs" }
+]

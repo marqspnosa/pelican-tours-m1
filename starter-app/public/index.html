@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pelican Tours · Book a trip</title>
+<style>
+:root{--brand:#1273a8}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#f4f7f8;color:#20303c}
+header{background:linear-gradient(160deg,var(--brand),#0b4460);color:#fff;padding:36px 22px 28px;text-align:center}
+header h1{margin:0;font-size:30px}
+header p{margin:6px 0 0;opacity:.9}
+main{max-width:880px;margin:0 auto;padding:22px 16px 70px}
+.banner{display:none;background:#fdf1df;border:1.5px solid #e0a437;color:#7a5a12;border-radius:10px;padding:10px 14px;margin:14px 0;font-size:14.5px}
+.banner.show{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-top:18px}
+.card{background:#fff;border:1px solid #dfe6ea;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.card h3{margin:0 0 4px;font-size:16px}
+.meta{font-size:12.5px;color:#64768a}
+.price{font-weight:800;color:var(--brand);font-size:18px;margin-top:4px}
+input{width:100%;margin-top:8px;padding:7px 10px;border:1px solid #ccd6dd;border-radius:8px;font:inherit;font-size:14px}
+button{margin-top:8px;width:100%;background:var(--brand);color:#fff;border:none;border-radius:8px;padding:9px 14px;font:inherit;font-weight:700;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#20303c;color:#fff;border-radius:10px;padding:10px 18px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+footer{text-align:center;font-size:12.5px;color:#8795a5;padding:20px}
+footer code{background:#e8edf0;border-radius:5px;padding:1px 7px}
+</style>
+</head>
+<body>
+<header id="hd">
+  <h1 id="cname">Loading…</h1>
+  <p id="ctag"></p>
+</header>
+<main>
+  <div class="banner" id="degraded">
+    ⚠️ <strong>Degraded mode.</strong> The booking API is unreachable — showing a cached tour list,
+    bookings disabled. The site bends; it doesn't break. (Graceful degradation in action.)
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+<footer>
+  Running on AWS · served by <code id="host">—</code> · refresh to see the load balancer choose an instance
+</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+// API base: '' means same origin (M1, everything on one EC2 instance).
+// When this page is hosted on S3 (M2+), create config.js next to it:
+//    window.API_BASE = "http://YOUR-ALB-DNS"           (M2)
+//    window.API_BASE = "https://xxxx.execute-api.us-east-1.amazonaws.com/prod"  (M4)
+const API_BASE = window.API_BASE || '';
+
+// Cached fallback used only when the API is down (the M4 kill-switch demo).
+const FALLBACK = [ { id: 0, name: "Cached tour list — API offline", price: 0, seats: 0, duration: "—" } ];
+
+const $ = id => document.getElementById(id);
+let apiUp = true;
+
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+
+function render(tours){
+  $('grid').innerHTML = tours.map(t => `
+    <div class="card">
+      <h3>${t.name}</h3>
+      <div class="meta">${t.duration} · up to ${t.seats} guests</div>
+      <div class="price">$${Number(t.price).toFixed(2)} <span style="font-weight:400;font-size:12.5px;color:#64768a">per person</span></div>
+      <input id="name-${t.id}" placeholder="Your name" ${apiUp ? '' : 'disabled'}>
+      <button ${apiUp ? '' : 'disabled'} onclick="book(${t.id})">Book this tour</button>
+    </div>`).join('');
+}
+
+async function book(id){
+  const name = $('name-' + id).value.trim();
+  if(!name) return toast('Enter a name first');
+  try{
+    const r = await fetch(API_BASE + '/api/bookings', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tourId:id, name, guests:1 }) });
+    const b = await r.json();
+    toast(r.ok ? `✓ Booking #${b.bookingId} confirmed for ${name}` : `Error: ${b.error}`);
+  }catch{ toast('API unreachable — booking not placed'); }
+}
+
+async function boot(){
+  try{
+    const cfg = await (await fetch(API_BASE + '/api/config')).json();
+    document.documentElement.style.setProperty('--brand', cfg.color);
+    $('cname').textContent = cfg.company;
+    $('ctag').textContent = cfg.tagline;
+    $('host').textContent = cfg.served_by;
+    document.title = cfg.company + ' · Book a trip';
+  }catch{ $('cname').textContent = 'Pelican Tours'; $('ctag').textContent = "Slow down. It's manatee time."; }
+
+  try{
+    const tours = await (await fetch(API_BASE + '/api/tours')).json();
+    apiUp = true;
+    render(tours);
+  }catch{
+    apiUp = false;
+    $('degraded').classList.add('show');
+    render(FALLBACK);
+  }
+}
+boot();
+</script>
+<!-- Optional runtime config for S3 hosting; 404s harmlessly when absent -->
+<script src="config.js"></script>
+</body>
+</html>
