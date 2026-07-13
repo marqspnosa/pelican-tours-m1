@@ -2,7 +2,7 @@
 
 Student: Maya Example
 Track: A - Pelican Tours starter app
-Repo: https://github.com/YOUR-GITHUB-USERNAME/pelican-tours-m1
+Repo: https://github.com/marqspnosa/pelican-tours-m1
 Live app URL: not created yet
 Health URL: not created yet
 
